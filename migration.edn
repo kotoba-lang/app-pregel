@@ -1,4 +1,4 @@
 {:schema "etzhayyim.migration/v1"
  :source {:repository "etzhayyim/root" :revision "57d57fc47f4b2544f2f71e8905c279f5cdf090f4" :path "60-apps/etzhayyim-project-pregel" :tree "bf1b97954bcbba1ed03725335b898d520222652e" :tracked-files 15 :bytes 38259}
- :destination {:repository "etzhayyim/com-etzhayyim-app-pregel"}
+ :destination {:repository "kotoba-lang/app-pregel"}
  :identity {:allowed-additions ["README.edn" "migration.edn"]}}
