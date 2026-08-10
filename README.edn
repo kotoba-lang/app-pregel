@@ -1,4 +1,6 @@
 {:schema "etzhayyim.repository/v1"
- :name "com-etzhayyim-app-pregel"
+ :name "app-pregel"
  :kind :app
- :canonical-metadata :edn}
+ :canonical-metadata :edn
+ :boundary {:role :application-orchestration
+            :generic-runtime "kotoba-lang/pregel"}}
