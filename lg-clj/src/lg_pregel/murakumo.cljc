@@ -6,7 +6,7 @@
   the endpoint and accepts the HTTP implementation and configuration from an
   explicit host adapter."
   (:require #?(:clj [cheshire.core :as json])
-            [clojure.string :as str]))
+            [kotoba.lang.text :as str]))
 
 (def default-config {:url "http://127.0.0.1:4000/v1"
                      :model "gpt-4o-mini"})
@@ -17,8 +17,8 @@
   [url]
   (let [[_ scheme host] (or (re-find #"^([A-Za-z][A-Za-z0-9+.\-]*)://([^/?#]*)" (str url))
                             [nil nil nil])
-        host (some-> host str/lower-case)]
-    (when-not (and (= "http" (some-> scheme str/lower-case))
+        host (some-> host str/lower)]
+    (when-not (and (= "http" (some-> scheme str/lower))
                    (contains? #{"127.0.0.1:4000" "localhost:4000" "[::1]:4000"} host))
       (throw (ex-info "off-fleet LLM endpoint refused (Murakumo loopback only)"
                       {:url url})))
