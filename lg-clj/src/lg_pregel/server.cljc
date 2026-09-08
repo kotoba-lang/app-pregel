@@ -23,7 +23,7 @@
   boundary (no RisingWave) and Murakumo loopback (ADR-2605215000) are honored
   without changing the routing."
   (:require #?(:clj [cheshire.core :as json])
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [langgraph.graph :as g]
             [lg-pregel.store :as store]
             [lg-pregel.graphs.outlook-triage :as outlook-triage]
@@ -182,11 +182,11 @@
       (let [command (or (:command body) {})
             verdict
             (if (str/starts-with? (str thread-id) "draft-")
-              (let [action     (str/lower-case (str (or (:resume command) "discard")))
+              (let [action     (str/lower (str (or (:resume command) "discard")))
                     final-text (str (or (:final_text command) ""))]
                 (store/call :apply-draft-verdict thread-id action final-text)
                 action)
-              (let [v0 (str/lower-case (str (or (:resume command) "gray")))
+              (let [v0 (str/lower (str (or (:resume command) "gray")))
                     v  (if (contains? #{"clean" "spam" "gray"} v0) v0 "gray")]
                 (store/call :apply-verdict thread-id v)
                 v))]
@@ -203,7 +203,7 @@
   "req {:method :path :headers :query :body} -> {:status :body ...}. The
   x-api-key / x-cron are read from :headers."
   [{:keys [method path headers query body]}]
-  (let [m     (keyword (str/lower-case (name (or method :get))))
+  (let [m     (keyword (str/lower (name (or method :get))))
         hdr   (fn [k] (get headers k))
         auth  {:x-api-key (hdr "x-api-key") :x-cron (hdr "x-cron")}
         parts (vec (remove str/blank? (str/split (str path) #"/")))]
