@@ -1,0 +1,63 @@
+(ns pregel.hitl
+  "pregel HITL 判定コア — itonami dapp bundle（pure, :effects #{}）。
+
+  human-in-the-loop の判定 dispatch と actor swap の判定（正本:
+  lg-clj/src/lg_pregel/store.cljk — HITL store seam の SSoT）:
+
+  - **verdict は pending の thread に対してだけ**（list-pending → get →
+    apply-verdict / apply-draft-verdict の順。無い thread には適用しない）。
+  - **default store は read-only / empty = offline で安全**（既定は生の
+    依存に触らせない）。
+  - **actor swap 規則**: 本番は `*store*` を差し替えるが**ルーティングは
+    触らない**（swap は store にだけ効く）。
+  - **正本の状態は append-only の監査台帳**（kotoba Datom log —
+    RisingWave は substrate 境界で禁止、ADR-2605262130 で非推奨）。
+
+  hitl-admission: 1 = 適用可（pending かつ thread 有り）/ 0 = 拒否
+  store-safe: 1 = read-only かつ生依存無し（offline で安全）
+  swap-judgment: 1 = store 差替のみ（routing 不変）/ 0 = routing に触れた
+  ledger-ok: 1 = append-only（書き換え無し）
+
+  実行 host はスカラーのみ = KIR v3 / i64/direct ABI（kernel/selfhost 両対応）。
+
+  テストはゼロ引数 test-*、戻り 1/0:
+  <amu> test aiueos/pregel_hitl.cljk"
+  (:export [main hitl-admission store-safe swap-judgment ledger-ok
+            test-hitl test-store test-swap test-ledger test-fail-closed]))
+
+(defn main [] :i64
+  0)
+
+(defn hitl-admission [is-pending :i64 has-thread :i64] :i64
+  (if (and (= is-pending 1) (= has-thread 1)) 1 0))
+
+(defn store-safe [read-only :i64 no-live-deps :i64] :i64
+  (if (and (= read-only 1) (= no-live-deps 1)) 1 0))
+
+(defn swap-judgment [store-rebound :i64 routing-untouched :i64] :i64
+  (if (and (= store-rebound 1) (= routing-untouched 1)) 1 0))
+
+(defn ledger-ok [append-only :i64] :i64
+  (if (= append-only 1) 1 0))
+
+;; --- tests（戻り 1 = pass） ------------------------------------------------
+
+(defn test-hitl [] :i64
+  ;; pending かつ thread 有りのときだけ verdict 適用
+  (if (= (+ (hitl-admission 1 1) (hitl-admission 1 0) (hitl-admission 0 1)) 1) 1 0))
+
+(defn test-store [] :i64
+  ;; 既定は read-only / empty = offline で安全
+  (if (= (+ (store-safe 1 1) (store-safe 0 1) (store-safe 1 0)) 1) 1 0))
+
+(defn test-swap [] :i64
+  ;; store 差替のみ、routing は不変
+  (if (= (+ (swap-judgment 1 1) (swap-judgment 1 0) (swap-judgment 0 1)) 1) 1 0))
+
+(defn test-ledger [] :i64
+  ;; 正本の状態は append-only（書き換え禁止）
+  (if (= (+ (ledger-ok 1) (ledger-ok 0)) 1) 1 0))
+
+(defn test-fail-closed [] :i64
+  ;; pending でない thread への verdict は通さない
+  (if (= (+ (hitl-admission 0 0) (hitl-admission 0 1)) 0) 1 0))
