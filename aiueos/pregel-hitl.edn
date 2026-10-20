@@ -1,0 +1,19 @@
+;; app-pregel — itonami（dapp）の aiueos アプリ記述子（notes.edn 形）。
+;; 判定コアは aiueos/pregel_hitl.cljk（HITL verdict dispatch・actor swap 判定）。
+;; 正本は lg-clj/src/lg_pregel/store.cljk（HITL store seam の SSoT）。
+;; pure（:effects #{}）。
+{:aiueos/component :app/pregel-hitl
+ :aiueos/kind :app
+ :aiueos/trust :untrusted
+ :aiueos/source "pregel_hitl.cljk"
+ :aiueos/wasm "pregel_hitl.wasm"
+ :aiueos/entry "main"
+ :aiueos/args []
+ :aiueos/imports #{}
+ :aiueos/exports #{:app/main
+                   :app/hitl-admission
+                   :app/store-safe
+                   :app/swap-judgment
+                   :app/ledger-ok}
+ :aiueos/effects #{}
+ :aiueos/limits {:memory-pages 16 :fuel 5000000}}

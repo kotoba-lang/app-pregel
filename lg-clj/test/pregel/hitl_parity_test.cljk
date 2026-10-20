@@ -1,0 +1,25 @@
+(ns pregel.hitl-parity-test
+  "aiueos/pregel_hitl.cljk（判定コア）と正本（store.cljk の HITL seam）の
+  parity。seam の規約（read-only 既定 / swap は routing 不変 / append-only
+  台帳）が変われば落ちる drift 検査。"
+  (:require [clojure.test :refer [deftest is testing]]
+            [clojure.string :as str]
+            ["fs" :as fs]))
+
+(def src
+  (fs/readFileSync
+   (str/join "/" ["lg-clj" "src" "lg_pregel" "store.cljk"]) "utf8"))
+
+(deftest seam-rules-match-guest
+  (testing "guest test-store: 既定は read-only / empty = offline で安全"
+    (is (str/includes? src "Read-only / empty"))
+    (is (str/includes? src "Safe offline")))
+  (testing "guest test-swap: 本番は *store* を差し替え、ルーティングは触らない"
+    (is (str/includes? src "WITHOUT touching the routing"))
+    (is (str/includes? src "*store*")))
+  (testing "guest test-ledger: 正本の状態は append-only の監査台帳"
+    (is (str/includes? src "append-only audit ledger")))
+  (testing "guest test-hitl / test-fail-closed: verdict の入口（pending → get → apply）"
+    (is (str/includes? src "apply-verdict"))
+    (is (str/includes? src "list-pending-gray"))
+    (is (str/includes? src "get-gray-item"))))
